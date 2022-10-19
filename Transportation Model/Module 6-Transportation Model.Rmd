@@ -1,0 +1,166 @@
+---
+title: "Transportation Assignment"
+date: "2022-10-11"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##set transportation matrix
+
+```{r}
+library(lpSolve)
+library(lpSolveAPI)
+cost1<- matrix(c(22,14,30,600,100,
+                    16,20,24,625,120,
+                    80,60,70,"-","-"),ncol=5,byrow= TRUE)
+colnames(cost1)<- c("Ware1","Ware2","Ware3","ProdnCost","ProdnCapacity")
+rownames(cost1)<-c("P.A","P.B"," Demand")
+cost1
+```
+
+
+#Objective function = Minimize the Transportation Cost
+Min TC = 622x11 + 614x12 + 630x13 + 0x14 + 641x21 + 645x22 + 649x23 + 0x24
+
+
+#Subject to constraints : Supply
+X11 + X12 + X13 + X14 <= 100 X21 + X22 + X23 + X24 <= 120
+
+#Subject to constraints : Demand
+X11 + X21 >= 80 X12 + X22 >= 60 X13 + X23 >= 70 X14 + X24 >= 10
+
+#Non-Negativity Constraints
+Xij >= 0
+Where i = 1,2 and j= 1,2,3,4 #The capacity = 220 and Demand = 210. We will add a “Dummy” row for
+Warehouse_4.
+
+```{r}
+transportation.cost.1<- matrix(c(622,614,630,0,
+                 641,645,649,0),ncol =4, byrow=TRUE)
+transportation.cost.1
+```
+
+##Constraints of r.h.s(supply side)
+```{r}
+rsigns<- rep("<=",2)
+rrhs<- c(100,120)
+```
+
+#Supply func. cannot be greater than the specified units
+##Demand Side
+```{r}
+csigns<- rep(">=",4)
+crhs<- c(80,60,70,10)
+```
+
+##demand function can be greater
+
+```{r}
+library(lpSolve)
+lptransmodel<-lp.transport(transportation.cost.1,"min",rsigns,rrhs,csigns,crhs)
+lptransmodel$solution
+```
+#80 AEDs in Plant2 - Warehouse1 
+#60 in Plant1 - Warehouse2 
+#40 AEDs in Plant1 - Warehouse3
+#30 AEDs in Plant2 - Warehouse3 
+
+#Warehouse capacity is 220 which is distributed bewtween 3 warehouses Plant2 is producing 80 products in Warehouse1, plant1 is producing 60products in Warehosue2. Plant1 is producing 40 products in Warehouse3.
+
+##Value of nvariables
+```{r}
+lptransmodel$objval
+```
+
+#Cost of production and shipping for the defibrilators is $132,790
+
+```{r}
+lptransmodel$duals
+```
+
+#2. Dual of transportation problem - The primal was to minimize the transportation cost the dual of it would be to maximize the valueadded(VA). a and b will be the variables for the dual.
+
+```{r}
+cost2<-matrix(c(622,614,630,100,"x1",
+                 641,645,649,120,"x2",
+                 80,60,70,220,"-","y1","y2","y3","-","-"),ncol = 5,nrow=4,byrow=TRUE)
+
+colcost.2 <- c("W1", "W2","W3","Production Capacity","Supply(Dual)")
+rowcost.2 <- c("A","B","Demand","Demand(Dual)")
+```
+
+#Objective function
+
+```{r}
+f.obj <- c(100,120,80,60,70)
+```
+
+#Transposed from the constraints matrix in the primal
+```{r}
+f.con <- matrix(c(1,0,1,0,0,
+1,0,0,1,0,
+1,0,0,0,1,
+0,1,1,0,0,
+0,1,0,1,0,
+0,1,0,0,1), nrow = 6, byrow = TRUE)
+f.dir <- c("<=",
+"<=",
+"<=",
+"<=",
+"<=",
+"<=")
+f.rhs <- c(622,614,630,641,645,649)
+lp("max",f.obj,f.con,f.dir,f.rhs)
+```
+## Success: the objective function is 139120
+
+```{r}
+lp("max",f.obj,f.con,f.dir,f.rhs)$solution
+```
+
+#Z=139,120 and variables are:
+#x1 = 614 x2 = 633 y1 = 8 y3 = 16
+
+#3. Economic Interpretation of the dual 
+
+#Economic Interpretation of the dual is, the minimal Z(Primal) = 132790 and the maximum Z(Dual) = 139120. We should not be shipping from Plant(A/B) to all the three Warehouses. We should be shipping from:
+
+#60X12 which is 60 Units from Plant A to Warehouse 2. 
+#40X13 which is 40 Units from Plant A to Warehouse 3. 
+#80X13 which is 60 Units from Plant B to Warehouse 1. 
+#30X13 which is 60 Units from Plant B to Warehouse 3. 
+#We will Max the profit from each distribution to the respective capacity.
+
+
+```{r}
+rrhs1 <- c(101,120)
+rsigns1 <- rep("<=",2)
+crhs1 <- c(80,60,70,10)
+csigns1 <- rep(">=",4)
+rrhs2 <- c(100,121)
+rsigns2 <- rep("<=",2)
+crhs2 <- c(80,60,70,10)
+csigns2 <- rep(">=",4)
+lp.transport(transportation.cost.1,"min",rsigns,rrhs,csigns,crhs)
+```
+
+```{r}
+lp.transport(transportation.cost.1,"min",rsigns1,rrhs1,csigns1,crhs1)
+```
+
+```{r}
+lp.transport(transportation.cost.1,"min",rsigns2,rrhs2,csigns2,crhs2)
+```
+
+```{r}
+lp("max", f.obj,f.con, f.dir,f.rhs)$solution
+
+```
+
