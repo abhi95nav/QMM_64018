@@ -1,0 +1,80 @@
+---
+title: "Module 9 - Goal Programming"
+date: "2022-11-06"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#The objective of the Emax corporation is to maximize profit of the new products with respect to objective function and constraints i.e., employement levels and earnings of the company.
+
+#Libraries required for the current environment
+```{r}
+library(lpSolve)
+library(lpSolveAPI)
+library(goalprog)
+```
+
+#objective function
+#Maximize Z = P - 6C - 3D, where  
+#P = total (discounted) profit over the life of the new products, 
+#C = change (in either direction) in the current level of employment, 
+#D = decrease (if any) in next year’s earnings from the current year’s level. 
+
+
+#lptable of each new product shown in the table
+```{r}
+lp_table<- matrix(c("Total Profit", "Employment Level", "Earnings Next Year",
+                       20,6,8,
+                       15,4,7,
+                       25,5,5,
+                       "Maximize","=50",">=75",
+                       "Millions of Dollars", "Hundreds of Employees", "Millions of Dollars"), ncol=6, byrow = F)
+colnames(lp_table) <- c("Factor","Product 1", "Product 2", "Product 3", "Goal", "Units")
+as.table(lp_table)
+```
+
+#Lp file was used under goal programming to import the objective functions. Following are the formulations used under objective function and constraints to lp formulation:
+#Objective function
+#max: 20x1 + 15x2 + 25x3 - 6y1m - 6y1p - 3y2m;
+
+#Constraints
+#6x1 + 4x2 + 5x3 + y1m - y1p = 50;
+#8x1 + 7x2 + 5x3 + y2m - y2p = 75;
+
+```{r}
+setwd("/Users/thupiliabhinav/Desktop/QMM/Module 9")
+lp<-read.lp("formulation_file.lp")
+lp
+```
+
+#Goal programming model 
+```{r}
+solve(lp)
+```
+#The formulation of lp was successfully asreturned value is 0.
+
+# Objective function to acheive maximize profit.
+```{r}
+get.objective(lp)
+```
+
+#Variable value of goal programming model
+```{r}
+get.variables(lp)
+```
+
+#interpretation
+
+#1.From above we can see there is a change to X3. Product 3 is the only product which the firm can produce i.e., 15 Units of Product 3 to thereby maximize the profit.
+ 
+#2.With respect to the employment level with the maximum number of employees confined to 50 Hundred Employees as per the contraints defined as per above,but here in this case the firm exceeded the employment levels by 25 Hundred Employees.
+ 
+#3.The goal of y2p and y2m is earnings for next year was to see any deviations. As per above formulation it didnt show any devaitions. 
+ 
+#4.The profit that the firm maximizing is 225 Million Dollars.
