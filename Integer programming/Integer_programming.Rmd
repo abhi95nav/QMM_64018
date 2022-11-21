@@ -1,0 +1,80 @@
+---
+title: "Integer Programming"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+  word_document: default
+date: "2022-11-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#importing lpsolve library for current environment
+```{r}
+library("lpSolveAPI")
+```
+
+#importing lp for current integer problem
+```{r}
+setwd("/Users/thupiliabhinav/Desktop/QMM/Integer programming")
+int_file <- read.lp("integer_file.lp")
+print(int_file)
+```
+#day workers required under current constraints
+```{r}
+day_workers <- matrix(c("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday",
+18,27,22,26,25,21,19),ncol=2,byrow = F)
+
+colnames(day_workers) <- c("day_of_the_week", "workers_required")
+
+as.table(day_workers)
+```
+#Package handlers at AP are guaranteed a five-day work week with two consecutive days off. The base wage for the handlers is $750 per week. Workers working on Saturday or Sunday receive an additional $25 per day. The possible shifts and salaries for package handlers are:
+```{r}
+day_offs_and_wages <- matrix(c(1,2,3,4,5,6,7,
+                               "Sunday and Monday","Monday and Tuesday","Tuesday and Wednesday","Wednesday and Thursday","Thursday and Friday","Friday and Saturday","Saturday and Sunday",
+                               "$775","$800","$800","$800","$800","$775","$750"),ncol=3,byrow=F)
+
+colnames(day_offs_and_wages) <- c("Shift", "Days_Off", "Wage")
+
+as.table(day_offs_and_wages)
+```
+#creating lp model.
+```{r}
+solve(int_file)
+```
+#The formulation of lp was successful as the value returned is 0.
+
+
+#Objective Function.
+```{r}
+get.objective(int_file)
+```
+#Total wages expenses for our objective function is $25,675 for AP shipping service.
+
+
+```{r}
+get.variables(int_file)
+```
+#Interpretation:
+#From above we can observe the following:
+#Worker Assigned in shift 1 = 2.
+#Worker Assigned in shift 2 = 4.
+#Worker Assigned in shift 3 = 5.
+#Worker Assigned in shift 4 = 0.
+#Worker Assigned in shift 5 = 8.
+#Worker Assigned in shift 6 = 1.
+#Worker Assigned in shift 7 = 13.
+
+#From above variables we can derive the objective function and constraints for the below model.
+#Sunday: x2 + x3 + x4 + x5 + x6 = 18;
+#Monday: x3 + x4 + x5 + x6 + x7 = 27;
+#Tuesday: x4 + x5 + x6 + x7 + x1 = 22;
+#Wednesday: x5 + x6 + x7 + x1 + x2 = 26;
+#Thursday: x6 + x7 + x1 + x2 + x3 = 25;
+#Friday: x7 + x1 + x2 + x3 + x4 = 21;
+#Saturday: x1 + x2 + x3 + x4 + x5 = 19;
